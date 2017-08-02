@@ -24,12 +24,15 @@ fn main() {
     };
 
     let src_dir = Path::new(&root_dir).join("src/minhook/src");
+    let src_dir2 = Path::new(&root_dir).join("src");
+
 
     Config::new()
         .file(src_dir.join("buffer.c"))
         .file(src_dir.join("hook.c"))
         .file(src_dir.join("trampoline.c"))
         .file(src_dir.join(hde))
+        .file(src_dir2.join("main.cpp"))
         .compile("libminhook.a");
 
     println!("cargo:rerun-if-changed=src/minhook/src/");

@@ -2,8 +2,11 @@
 name = "xpsupport"
 version = "0.1.0"
 authors = ["lynnux <lynnux@qq.com>"]
+build = "build.rs"
+link = "minhook"
 
 [dependencies]
+
 [lib]
 crate-type = ["dylib"]
 
