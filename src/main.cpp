@@ -75,10 +75,22 @@ extern "C" void dllmain()
 }
 
 #if defined(_MSC_VER)
-extern "C" BOOL __stdcall _DllMainCRTStartup(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+extern "C" BOOL WINAPI _DllMainCRTStartup(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+#else
+extern "C" BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+#endif
 {
-    dllmain();
+    switch(ul_reason_for_call) {
+    case DLL_PROCESS_ATTACH:
+        dllmain();
+        break;
         
+    case DLL_PROCESS_DETACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    default:
+        break;
+    }
     return TRUE;
 }
-#endif
+
