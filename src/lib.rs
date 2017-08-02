@@ -2,7 +2,7 @@
 #![no_std]
 #![no_core]
 
-// msvc版本编译最NB，连dll import都没有
+// 在没有实际代码里，msvc版本编译最NB，连dll import都没有。而gnu则把没有调用的minhook代码都加进来了
 
 // extern crate libc; // 好坑啊，默认使用std，必须如下：
 //libc = { version = "0.2", default-features = false }
