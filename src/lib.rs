@@ -1,4 +1,4 @@
-﻿#![feature(lang_items, no_core, start)]
+﻿#![feature(lang_items, no_core)]
 #![no_std]
 #![no_core]
 
@@ -6,12 +6,12 @@
 
 // extern crate libc; // 好坑啊，默认使用std，必须如下：
 //libc = { version = "0.2", default-features = false }
-extern {fn dllmain();}
-#[start]
-fn main()
-{
-    unsafe{dllmain();}
-}
+// extern {fn dllmain();}
+// #[start]                        // 
+// fn main()
+// {
+//     unsafe{dllmain();}
+// }
 
 #[lang = "eh_personality"] extern fn eh_personality() {}
 #[lang = "panic_fmt"] fn panic_fmt() -> ! { loop {} }

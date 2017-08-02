@@ -25,49 +25,42 @@
 */
 
 // rust有实现的，可惜不给merge啊 https://github.com/rust-lang/rust/pull/27036/files
-// conditon varible https://github.com/GNOME/glib/blob/master/glib/gthread-win32.c
-//
-
-/* {{{1 SRWLock and CONDITION_VARIABLE emulation (for Windows XP) */
-
-static CRITICAL_SECTION g_thread_xp_lock;
-static DWORD            g_thread_xp_waiter_tls;
-
-/* {{{2 GThreadWaiter utility class for CONDITION_VARIABLE emulation */
-typedef struct _GThreadXpWaiter GThreadXpWaiter;
-struct _GThreadXpWaiter
-{
-    HANDLE                     event;
-    volatile GThreadXpWaiter  *next;
-    volatile GThreadXpWaiter **my_owner;
-};
 
 typedef FARPROC (WINAPI *GETPROCADDRESS)(HMODULE hModule, LPCSTR  lpProcName);
 GETPROCADDRESS OrgGetProcAddress = 0;
+GETPROCADDRESS OrgGetProcAddress2 = 0;
+static HMODULE gKernel32 = 0;
 FARPROC WINAPI HookGetProcAddress(HMODULE hModule, LPCSTR  lpProcName)
 {
-    return OrgGetProcAddress(hModule, lpProcName);
+    FARPROC ret = OrgGetProcAddress2(hModule, lpProcName);
+    if(!ret && (hModule == gKernel32))
+    {
+        /* if(0 == strcmp()) */
+        {
+            
+        }
+    }
+    return ret;
 }
 
-
-
-extern "C" void dllmain()
+void dllmain()
 {
-    static bool inited = false;
+    static BOOL inited = FALSE;
     if(!inited)
     {
-        inited = true;
+        inited = TRUE;
         MH_Initialize();
 
-        HMODULE mod = GetModuleHandleW(L"kernel32.dll");
-        if(mod)
+        gKernel32 = GetModuleHandleW(L"kernel32.dll");
+        if(gKernel32)
         {
-            OrgGetProcAddress = (GETPROCADDRESS)GetProcAddress(mod, "GetProcAddress");
+            OrgGetProcAddress = GetProcAddress(gKernel32, "GetProcAddress");
             if(OrgGetProcAddress)
             {
-                if(MH_OK == MH_CreateHook((PVOID)OrgGetProcAddress, (PVOID)HookGetProcAddress, (PVOID*)&OrgGetProcAddress))
+                // 第1跟第3参数必须不一样，否则MH_EnableHook返回4
+                if(MH_OK == MH_CreateHook(OrgGetProcAddress, HookGetProcAddress, &OrgGetProcAddress2))
                 {
-                    MH_EnableHook((PVOID)OrgGetProcAddress);
+                    MH_EnableHook(OrgGetProcAddress);
                 }
             }
         }
@@ -75,9 +68,9 @@ extern "C" void dllmain()
 }
 
 #if defined(_MSC_VER)
-extern "C" BOOL WINAPI _DllMainCRTStartup(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL WINAPI _DllMainCRTStartup(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 #else
-extern "C" BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 #endif
 {
     switch(ul_reason_for_call) {
