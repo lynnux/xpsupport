@@ -23,11 +23,13 @@
   } RTL_CONDITION_VARIABLE, *PRTL_CONDITION_VARIABLE;   
   rust没有使用InitializeConditionVariable，反汇编看该函数只是把RTL_CONDITION_VARIABLE.Ptr置0，跟rust里的new逻辑一样
 */
-
+/* condvar的实现有一点限制，就是没有init和free概念的函数 */
 // rust有实现的，可惜不给merge啊 https://github.com/rust-lang/rust/pull/27036/files  这个好像没通过测试
-// 还是reactOS靠谱
+// 还是reactOS靠谱，不过缺少TryAcquireSRWLockExclusive实现，等一段时间估计有
 // https://github.com/reactos/reactos/tree/master/reactos/dll/win32/kernel32_vista
 // https://github.com/reactos/reactos/blob/master/reactos/dll/win32/ntdll_vista
+// 此外还有wine，感觉reactOS跟wine是互相抄的:)，wine也是缺少 TryAcquireSRWLockExclusive，但wine实现代码还是不一样的
+/* 此外还有一个Extended XP https://ryanvm.net/forum/viewtopic.php?t=10631 据说开源了*/
 extern VOID
 WINAPI
 AcquireSRWLockExclusive(PSRWLOCK Lock);
