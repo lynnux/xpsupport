@@ -15,6 +15,96 @@
 
 /* #include <rtl_vista.h> */
 #include <windows.h>
+#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
+#define ASSERT
+FORCEINLINE
+VOID
+InitializeListHead(
+     PLIST_ENTRY ListHead
+    )
+
+{
+
+    ListHead->Flink = ListHead->Blink = ListHead;
+    return;
+}
+
+BOOLEAN
+CFORCEINLINE
+IsListEmpty(
+     const LIST_ENTRY * ListHead
+    )
+
+{
+
+    return (BOOLEAN)(ListHead->Flink == ListHead);
+}
+
+FORCEINLINE
+BOOLEAN
+RemoveEntryList(
+     PLIST_ENTRY Entry
+    )
+
+{
+
+    PLIST_ENTRY Blink;
+    PLIST_ENTRY Flink;
+
+    Flink = Entry->Flink;
+    Blink = Entry->Blink;
+    Blink->Flink = Flink;
+    Flink->Blink = Blink;
+    return (BOOLEAN)(Flink == Blink);
+}
+
+FORCEINLINE
+VOID
+InsertTailList(
+     PLIST_ENTRY ListHead,
+     PLIST_ENTRY Entry
+    )
+{
+
+    PLIST_ENTRY Blink;
+
+    Blink = ListHead->Blink;
+    Entry->Flink = ListHead;
+    Entry->Blink = Blink;
+    Blink->Flink = Entry;
+    ListHead->Blink = Entry;
+    return;
+}
+
+NTSTATUS
+NTAPI
+NtReleaseKeyedEvent(
+    HANDLE Handle,
+    PVOID Key,
+    BOOLEAN Alertable,
+    PLARGE_INTEGER Timeout);
+
+#define RtlEnterCriticalSection EnterCriticalSection
+#define RtlLeaveCriticalSection LeaveCriticalSection
+
+NTSTATUS
+NTAPI
+NtWaitForKeyedEvent(
+      HANDLE Handle,
+      PVOID Key,
+      BOOLEAN Alertable,
+      PLARGE_INTEGER Timeout);
+
+typedef PVOID POBJECT_ATTRIBUTES;
+NTSTATUS
+NTAPI
+NtCreateKeyedEvent(
+      PHANDLE OutHandle,
+      ACCESS_MASK AccessMask,
+      POBJECT_ATTRIBUTES ObjectAttributes,
+      ULONG Flags);
+NTSTATUS NTAPI NtClose(HANDLE);
+    
 /* #define NDEBUG */
 /* #include <debug.h> */
 

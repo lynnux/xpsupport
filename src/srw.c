@@ -15,6 +15,10 @@
 
 /* #include <rtl_vista.h> */
 #include <windows.h>
+#define ASSERT
+NTAPI
+RtlRaiseStatus(
+     NTSTATUS Status);
 
 #if defined(_M_IX86) || defined(_M_AMD64)
 #define InterlockedCompareExchange _InterlockedCompareExchange

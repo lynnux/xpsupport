@@ -1,6 +1,7 @@
 /* from https://github.com/reactos/reactos/blob/master/reactos/dll/win32/kernel32_vista/sync.c */
 
 #include <windows.h>
+#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 
 VOID
 NTAPI
@@ -65,6 +66,15 @@ WINAPI
 ReleaseSRWLockShared(PSRWLOCK Lock)
 {
     RtlReleaseSRWLockShared((PRTL_SRWLOCK)Lock);
+}
+
+FORCEINLINE
+PLARGE_INTEGER
+GetNtTimeout(PLARGE_INTEGER Time, DWORD Timeout)
+{
+    if (Timeout == INFINITE) return NULL;
+    Time->QuadPart = (ULONGLONG)Timeout * -10000;
+    return Time;
 }
 
 BOOL
