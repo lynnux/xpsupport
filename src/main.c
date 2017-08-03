@@ -1,70 +1,76 @@
-#include <windows.h>
+ï»¿#include <windows.h>
 #include "minhook/include/MinHook.h"
 
+#if !defined(_MSC_VER)
+typedef struct _RTL_SRWLOCK { PVOID Ptr; } RTL_SRWLOCK,*PRTL_SRWLOCK;
+typedef PRTL_SRWLOCK PSRWLOCK;
+typedef struct _RTL_CONDITION_VARIABLE { PVOID Ptr; } RTL_CONDITION_VARIABLE,*PRTL_CONDITION_VARIABLE;
+typedef PRTL_CONDITION_VARIABLE PCONDITION_VARIABLE;
+#endif
+
 /*
-
-  pub fn SleepConditionVariableSRW(ConditionVariable: PCONDITION_VARIABLE,
-  pub fn WakeConditionVariable(ConditionVariable: PCONDITION_VARIABLE)
-  pub fn WakeAllConditionVariable(ConditionVariable: PCONDITION_VARIABLE)
-
-  pub fn AcquireSRWLockExclusive(SRWLock: PSRWLOCK) -> () {
-  pub fn AcquireSRWLockShared(SRWLock: PSRWLOCK) -> () {
-  pub fn ReleaseSRWLockExclusive(SRWLock: PSRWLOCK) -> () {
-  pub fn ReleaseSRWLockShared(SRWLock: PSRWLOCK) -> () {
-  pub fn TryAcquireSRWLockExclusive(SRWLock: PSRWLOCK) -> BOOLEAN {
-  pub fn TryAcquireSRWLockShared(SRWLock: PSRWLOCK) -> BOOLEAN {
-
-  typedef struct _RTL_SRWLOCK {                            
-  PVOID Ptr;                                       
-  } RTL_SRWLOCK, *PRTL_SRWLOCK;                            
-  #define RTL_SRWLOCK_INIT {0}                            
-  typedef struct _RTL_CONDITION_VARIABLE {                    
-  PVOID Ptr;                                       
-  } RTL_CONDITION_VARIABLE, *PRTL_CONDITION_VARIABLE;   
-  rustÃ»ÓĞÊ¹ÓÃInitializeConditionVariable£¬·´»ã±à¿´¸Ãº¯ÊıÖ»ÊÇ°ÑRTL_CONDITION_VARIABLE.PtrÖÃ0£¬¸úrustÀïµÄnewÂß¼­Ò»Ñù
+  rustæ²¡æœ‰ä½¿ç”¨InitializeConditionVariableï¼Œåæ±‡ç¼–çœ‹è¯¥å‡½æ•°åªæ˜¯æŠŠRTL_CONDITION_VARIABLE.Ptrç½®0ï¼Œè·Ÿrusté‡Œçš„newé€»è¾‘ä¸€æ ·
 */
-/* condvarµÄÊµÏÖÓĞÒ»µãÏŞÖÆ£¬¾ÍÊÇÃ»ÓĞinitºÍfree¸ÅÄîµÄº¯Êı */
-// rustÓĞÊµÏÖµÄ£¬¿ÉÏ§²»¸ømerge°¡ https://github.com/rust-lang/rust/pull/27036/files  Õâ¸öºÃÏñÃ»Í¨¹ı²âÊÔ
-// »¹ÊÇreactOS¿¿Æ×£¬²»¹ıÈ±ÉÙTryAcquireSRWLockExclusiveÊµÏÖ£¬µÈÒ»¶ÎÊ±¼ä¹À¼ÆÓĞ
+/* condvarçš„å®ç°æœ‰ä¸€ç‚¹é™åˆ¶ï¼Œå°±æ˜¯æ²¡æœ‰initå’Œfreeæ¦‚å¿µçš„å‡½æ•° */
+// rustæœ‰å®ç°çš„ï¼Œå¯æƒœä¸ç»™mergeå•Š https://github.com/rust-lang/rust/pull/27036/files  è¿™ä¸ªå¥½åƒæ²¡é€šè¿‡æµ‹è¯•
+// è¿˜æ˜¯reactOSé è°±ï¼Œä¸è¿‡ç¼ºå°‘TryAcquireSRWLockExclusiveå®ç°ï¼Œç­‰ä¸€æ®µæ—¶é—´ä¼°è®¡æœ‰
 // https://github.com/reactos/reactos/tree/master/reactos/dll/win32/kernel32_vista
 // https://github.com/reactos/reactos/blob/master/reactos/dll/win32/ntdll_vista
-// ´ËÍâ»¹ÓĞwine£¬¸Ğ¾õreactOS¸úwineÊÇ»¥Ïà³­µÄ:)£¬wineÒ²ÊÇÈ±ÉÙ TryAcquireSRWLockExclusive£¬µ«wineÊµÏÖ´úÂë»¹ÊÇ²»Ò»ÑùµÄ
-/* ´ËÍâ»¹ÓĞÒ»¸öExtended XP https://ryanvm.net/forum/viewtopic.php?t=10631 ¾İËµ¿ªÔ´ÁË*/
-extern VOID
-WINAPI
-AcquireSRWLockExclusive(PSRWLOCK Lock);
-extern VOID
-WINAPI
-AcquireSRWLockShared(PSRWLOCK Lock);
-extern VOID
-WINAPI
-ReleaseSRWLockExclusive(PSRWLOCK Lock);
-extern VOID
-WINAPI
-ReleaseSRWLockShared(PSRWLOCK Lock);
-extern BOOL
-WINAPI
-SleepConditionVariableSRW(PCONDITION_VARIABLE ConditionVariable, PSRWLOCK Lock, DWORD Timeout, ULONG Flags);
-extern VOID
-WINAPI
-WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
-extern VOID
-WINAPI
-WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+// æ­¤å¤–è¿˜æœ‰wineï¼Œæ„Ÿè§‰reactOSè·Ÿwineæ˜¯äº’ç›¸æŠ„çš„:)ï¼Œwineä¹Ÿæ˜¯ç¼ºå°‘ TryAcquireSRWLockExclusiveï¼Œä½†wineå®ç°ä»£ç è¿˜æ˜¯ä¸ä¸€æ ·çš„
+/* æ­¤å¤–è¿˜æœ‰ä¸€ä¸ªExtended XP https://ryanvm.net/forum/viewtopic.php?t=10631 æ®è¯´å¼€æºäº†*/
+
+// gnuç‰ˆæœ¬éœ€è¦æŠŠmingw-w64é‡Œçš„libntdll.aæ‹·è´æ”¾å…¥
+extern BOOL init_sync();
+    
+extern VOID WINAPI RtlAcquireSRWLockExclusive(PSRWLOCK Lock);
+extern VOID WINAPI RtlAcquireSRWLockShared(PSRWLOCK Lock);
+extern VOID WINAPI RtlReleaseSRWLockExclusive(PSRWLOCK Lock);
+extern VOID WINAPI RtlReleaseSRWLockShared(PSRWLOCK Lock);
+extern BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock );
+extern BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock );
+
+extern BOOL WINAPI RtlSleepConditionVariableSRW(PCONDITION_VARIABLE ConditionVariable, PSRWLOCK Lock, DWORD Timeout, ULONG Flags);
+extern VOID WINAPI RtlWakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+extern VOID WINAPI RtlWakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 
 typedef FARPROC (WINAPI *GETPROCADDRESS)(HMODULE hModule, LPCSTR  lpProcName);
 GETPROCADDRESS OrgGetProcAddress = 0;
 GETPROCADDRESS OrgGetProcAddress2 = 0;
 static HMODULE gKernel32 = 0;
+
+static struct {
+    const char* procName;
+    FARPROC address;
+}proc_map[] =
+{
+    {"AcquireSRWLockExclusive", RtlAcquireSRWLockExclusive},
+    {"AcquireSRWLockShared", RtlAcquireSRWLockShared},
+    {"ReleaseSRWLockExclusive", RtlReleaseSRWLockExclusive},
+    {"ReleaseSRWLockShared", RtlReleaseSRWLockShared},
+    {"TryAcquireSRWLockExclusive", RtlTryAcquireSRWLockExclusive},
+    {"TryAcquireSRWLockShared", RtlTryAcquireSRWLockShared},
+
+    {"SleepConditionVariableSRW", RtlSleepConditionVariableSRW},
+    {"WakeAllConditionVariable", RtlWakeAllConditionVariable},
+    {"WakeConditionVariable", RtlWakeConditionVariable},
+
+    {0, 0}
+};
+
 FARPROC WINAPI HookGetProcAddress(HMODULE hModule, LPCSTR  lpProcName)
 {
     FARPROC ret = OrgGetProcAddress2(hModule, lpProcName);
     if(!ret && (hModule == gKernel32))
     {
-        if(0 == strcmp(lpProcName, "AcquireSRWLockExclusive"))
+        int i =0;
+        do
         {
-            return AcquireSRWLockExclusive;
+            if(0 == strcmp(lpProcName, proc_map[i].procName))
+            {
+                return proc_map[i].address;
+            }
         }
+        while(proc_map[i].address);
     }
     return ret;
 }
@@ -75,21 +81,24 @@ void dllmain()
     if(!inited)
     {
         inited = TRUE;
-        MH_Initialize();
-
-        gKernel32 = GetModuleHandleW(L"kernel32.dll");
-        if(gKernel32)
+        if(init_sync())
         {
-            OrgGetProcAddress = GetProcAddress(gKernel32, "GetProcAddress");
-            if(OrgGetProcAddress)
+            MH_Initialize();
+
+            gKernel32 = GetModuleHandleW(L"kernel32.dll");
+            if(gKernel32)
             {
-                // µÚ1¸úµÚ3²ÎÊı±ØĞë²»Ò»Ñù£¬·ñÔòMH_EnableHook·µ»Ø4
-                if(MH_OK == MH_CreateHook(OrgGetProcAddress, HookGetProcAddress, &OrgGetProcAddress2))
+                OrgGetProcAddress = GetProcAddress(gKernel32, "GetProcAddress");
+                if(OrgGetProcAddress)
                 {
-                    MH_EnableHook(OrgGetProcAddress);
+                    // ç¬¬1è·Ÿç¬¬3å‚æ•°å¿…é¡»ä¸ä¸€æ ·ï¼Œå¦åˆ™MH_EnableHookè¿”å›4
+                    if(MH_OK == MH_CreateHook(OrgGetProcAddress, HookGetProcAddress, &OrgGetProcAddress2))
+                    {
+                        MH_EnableHook(OrgGetProcAddress);
+                    }
                 }
             }
-        }
+        } 
     }
 }
 
