@@ -13,10 +13,10 @@
 
 /* INCLUDES ******************************************************************/
 
-#include <rtl_vista.h>
-
-#define NDEBUG
-#include <debug.h>
+/* #include <rtl_vista.h> */
+#include <windows.h>
+/* #define NDEBUG */
+/* #include <debug.h> */
 
 /* INTERNAL TYPES ************************************************************/
 

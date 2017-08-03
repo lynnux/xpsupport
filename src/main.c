@@ -28,6 +28,27 @@
 // »¹ÊÇreactOS¿¿Æ×
 // https://github.com/reactos/reactos/tree/master/reactos/dll/win32/kernel32_vista
 // https://github.com/reactos/reactos/blob/master/reactos/dll/win32/ntdll_vista
+extern VOID
+WINAPI
+AcquireSRWLockExclusive(PSRWLOCK Lock);
+extern VOID
+WINAPI
+AcquireSRWLockShared(PSRWLOCK Lock);
+extern VOID
+WINAPI
+ReleaseSRWLockExclusive(PSRWLOCK Lock);
+extern VOID
+WINAPI
+ReleaseSRWLockShared(PSRWLOCK Lock);
+extern BOOL
+WINAPI
+SleepConditionVariableSRW(PCONDITION_VARIABLE ConditionVariable, PSRWLOCK Lock, DWORD Timeout, ULONG Flags);
+extern VOID
+WINAPI
+WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+extern VOID
+WINAPI
+WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 
 typedef FARPROC (WINAPI *GETPROCADDRESS)(HMODULE hModule, LPCSTR  lpProcName);
 GETPROCADDRESS OrgGetProcAddress = 0;
@@ -38,9 +59,9 @@ FARPROC WINAPI HookGetProcAddress(HMODULE hModule, LPCSTR  lpProcName)
     FARPROC ret = OrgGetProcAddress2(hModule, lpProcName);
     if(!ret && (hModule == gKernel32))
     {
-        /* if(0 == strcmp()) */
+        if(0 == strcmp(lpProcName, "AcquireSRWLockExclusive"))
         {
-            
+            return AcquireSRWLockExclusive;
         }
     }
     return ret;

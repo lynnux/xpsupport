@@ -13,10 +13,21 @@
 
 /* INCLUDES *****************************************************************/
 
-#include <rtl_vista.h>
+/* #include <rtl_vista.h> */
+#include <windows.h>
 
-#define NDEBUG
-#include <debug.h>
+#if defined(_M_IX86) || defined(_M_AMD64)
+#define InterlockedCompareExchange _InterlockedCompareExchange
+#define InterlockedIncrement _InterlockedIncrement
+#define InterlockedDecrement _InterlockedDecrement
+#define InterlockedExchangeAdd _InterlockedExchangeAdd
+#define InterlockedExchange _InterlockedExchange
+#define InterlockedBitTestAndSet _interlockedbittestandset
+#define InterlockedBitTestAndSet64 _interlockedbittestandset64
+#endif
+
+/* #define NDEBUG */
+/* #include <debug.h> */
 
 /* FUNCTIONS *****************************************************************/
 
@@ -322,7 +333,7 @@ VOID
 NTAPI
 RtlAcquireSRWLockShared(IN OUT PRTL_SRWLOCK SRWLock)
 {
-    __ALIGNED(16) RTLP_SRWLOCK_WAITBLOCK StackWaitBlock;
+    /* __ALIGNED(16) */ RTLP_SRWLOCK_WAITBLOCK StackWaitBlock;
     RTLP_SRWLOCK_SHARED_WAKE SharedWake;
     LONG_PTR CurrentValue, NewValue;
     PRTLP_SRWLOCK_WAITBLOCK First, Shared, FirstWait;
@@ -574,6 +585,7 @@ RtlReleaseSRWLockShared(IN OUT PRTL_SRWLOCK SRWLock)
         }
         else
         {
+#define  STATUS_RESOURCE_NOT_OWNED 0xC0000264
             /* The RTL_SRWLOCK_SHARED bit has to be present now,
                even in the contended case! */
             RtlRaiseStatus(STATUS_RESOURCE_NOT_OWNED);
@@ -588,7 +600,7 @@ VOID
 NTAPI
 RtlAcquireSRWLockExclusive(IN OUT PRTL_SRWLOCK SRWLock)
 {
-    __ALIGNED(16) RTLP_SRWLOCK_WAITBLOCK StackWaitBlock;
+    /* __ALIGNED(16) */ RTLP_SRWLOCK_WAITBLOCK StackWaitBlock;
     PRTLP_SRWLOCK_WAITBLOCK First, Last;
 
     if (InterlockedBitTestAndSetPointer(&SRWLock->Ptr,
