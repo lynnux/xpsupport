@@ -24,7 +24,10 @@
   rust没有使用InitializeConditionVariable，反汇编看该函数只是把RTL_CONDITION_VARIABLE.Ptr置0，跟rust里的new逻辑一样
 */
 
-// rust有实现的，可惜不给merge啊 https://github.com/rust-lang/rust/pull/27036/files
+// rust有实现的，可惜不给merge啊 https://github.com/rust-lang/rust/pull/27036/files  这个好像没通过测试
+// 还是reactOS靠谱
+// https://github.com/reactos/reactos/tree/master/reactos/dll/win32/kernel32_vista
+// https://github.com/reactos/reactos/blob/master/reactos/dll/win32/ntdll_vista
 
 typedef FARPROC (WINAPI *GETPROCADDRESS)(HMODULE hModule, LPCSTR  lpProcName);
 GETPROCADDRESS OrgGetProcAddress = 0;

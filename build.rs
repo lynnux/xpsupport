@@ -35,7 +35,6 @@ fn main() {
         .file(src_dir.join(hde))
         .file(src_dir2.join("main.c"))
         .file(src_dir2.join("gthread-win32.c"))
-        .flag("-Wl,-emain")
         .compile("libminhook.a");
 
     println!("cargo:rerun-if-changed=src/minhook/src/");
