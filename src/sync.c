@@ -26,19 +26,33 @@
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 #define ASSERT
 
-#if defined(_M_IX86) || defined(_M_AMD64)
-#define InterlockedCompareExchange _InterlockedCompareExchange
-#define InterlockedIncrement _InterlockedIncrement
-#define InterlockedDecrement _InterlockedDecrement
-#define InterlockedExchangeAdd _InterlockedExchangeAdd
-#define InterlockedExchange _InterlockedExchange
-#define InterlockedBitTestAndSet _interlockedbittestandset
-#define InterlockedBitTestAndSet64 _interlockedbittestandset64
+#if defined(_LP64) || defined(_WIN64) || defined(__MINGW64__)
+typedef long long atomic_t;
+#if defined(_MSC_VER)
+#define interlocked_cmpxchg _InterlockedCompareExchange64
+#define interlocked_xchg _InterlockedExchange64
+#define interlocked_xchg_add _InterlockedExchangeAdd64
+#endif
+#else
+typedef long atomic_t;
+#if defined(_MSC_VER)
+#define interlocked_cmpxchg _InterlockedCompareExchange
+#define interlocked_xchg _InterlockedExchange
+#define interlocked_xchg_add _InterlockedExchangeAdd
+#endif
 #endif
 
-#define interlocked_cmpxchg InterlockedCompareExchange
-#define interlocked_xchg InterlockedExchange
-#define interlocked_xchg_add InterlockedExchangeAdd
+// msvc https://github.com/tboox/tbox/blob/73dc6867df4b057844c7922c826559894b78fc39/src/tbox/platform/windows/atomic.h
+// gnu https://github.com/tboox/tbox/blob/73dc6867df4b057844c7922c826559894b78fc39/src/tbox/platform/compiler/gcc/atomic.h
+#if !defined(_MSC_VER)
+// gnu 其实mingw好像只支持_InterlockedXXX函数
+atomic_t interlocked_cmpxchg( atomic_t *dest, atomic_t xchg, atomic_t compare )
+{
+    return __sync_val_compare_and_swap( dest, compare, xchg ); /* 注意后两个参数的顺序，跟InterlockedCompareExchange不一样 */
+}
+#define interlocked_xchg __sync_lock_test_and_set
+#define interlocked_xchg_add __sync_fetch_and_add
+#endif
 
 #define STATUS_SUCCESS ((NTSTATUS)0x00000000L) 
 
@@ -58,13 +72,13 @@ typedef NTSTATUS (NTAPI *NTRELEASEKEYEDEVENT)(
     HANDLE Handle,
     PVOID Key,
     BOOLEAN Alertable,
-    PLARGE_INTEGER Timeout);
+    const LARGE_INTEGER* Timeout);
 
 typedef NTSTATUS (NTAPI *NTWAITFORKEYEDEVENT)(
     HANDLE Handle,
     PVOID Key,
     BOOLEAN Alertable,
-    PLARGE_INTEGER Timeout);
+    const LARGE_INTEGER* Timeout);
 
 typedef PVOID POBJECT_ATTRIBUTES;
 typedef NTSTATUS (NTAPI *NTCREATEKEYEDEVENT)(
@@ -74,8 +88,8 @@ typedef NTSTATUS (NTAPI *NTCREATEKEYEDEVENT)(
     ULONG Flags);
 
 typedef NTSTATUS (NTAPI *NTCLOSE)(HANDLE);
-typedef NTSTATUS (NTAPI *RTLENTERCRITICALSECTION) (CRITICAL_SECTION* crit);
-typedef NTSTATUS (NTAPI *RTLLEAVECRITICALSECTION) (CRITICAL_SECTION* crit);
+typedef NTSTATUS (NTAPI *RTLENTERCRITICALSECTION) (RTL_CRITICAL_SECTION* crit);
+typedef NTSTATUS (NTAPI *RTLLEAVECRITICALSECTION) (RTL_CRITICAL_SECTION* crit);
 typedef VOID (NTAPI *RTLRAISESTATUS)(NTSTATUS Status);
 
 NTCLOSE gNtClose = 0;
@@ -88,9 +102,9 @@ RTLRAISESTATUS gRtlRaiseStatus = 0;
 
 HANDLE keyed_event = NULL;
 
-static inline int interlocked_dec_if_nonzero( int *dest )
+static inline atomic_t interlocked_dec_if_nonzero(atomic_t *dest )
 {
-    int val, tmp;
+    atomic_t val, tmp;
     for (val = *dest;; val = tmp)
     {
         if (!val || (tmp = interlocked_cmpxchg( dest, val - 1, val )) == val)
@@ -135,7 +149,7 @@ static inline unsigned int srwlock_lock_exclusive( unsigned int *dest, int incr 
         srwlock_check_invalid( tmp );
         if ((tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(tmp & SRWLOCK_MASK_SHARED_QUEUE))
             tmp |= SRWLOCK_MASK_IN_EXCLUSIVE;
-        if ((tmp = interlocked_cmpxchg( (int *)dest, tmp, val )) == val)
+        if ((tmp = interlocked_cmpxchg( (atomic_t *)dest, tmp, val )) == val)
             break;
     }
     return val;
@@ -154,7 +168,7 @@ static inline unsigned int srwlock_unlock_exclusive( unsigned int *dest, int inc
         srwlock_check_invalid( tmp );
         if (!(tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE))
             tmp &= SRWLOCK_MASK_SHARED_QUEUE;
-        if ((tmp = interlocked_cmpxchg( (int *)dest, tmp, val )) == val)
+        if ((tmp = interlocked_cmpxchg( (atomic_t *)dest, tmp, val )) == val)
             break;
     }
     return val;
@@ -247,7 +261,7 @@ void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
             tmp = val + SRWLOCK_RES_EXCLUSIVE;
         else
             tmp = val + SRWLOCK_RES_SHARED;
-        if ((tmp = interlocked_cmpxchg( (int *)&lock->Ptr, tmp, val )) == val)
+        if ((tmp = interlocked_cmpxchg( (atomic_t *)&lock->Ptr, tmp, val )) == val)
             break;
     }
 
@@ -291,7 +305,7 @@ void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
  */
 BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
 {
-    return interlocked_cmpxchg( (int *)&lock->Ptr, SRWLOCK_MASK_IN_EXCLUSIVE |
+    return interlocked_cmpxchg( (atomic_t *)&lock->Ptr, SRWLOCK_MASK_IN_EXCLUSIVE |
                                 SRWLOCK_RES_EXCLUSIVE, 0 ) == 0;
 }
 
@@ -305,7 +319,7 @@ BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock )
     {
         if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
             return FALSE;
-        if ((tmp = interlocked_cmpxchg( (int *)&lock->Ptr, val + SRWLOCK_RES_SHARED, val )) == val)
+        if ((tmp = interlocked_cmpxchg( (atomic_t *)&lock->Ptr, val + SRWLOCK_RES_SHARED, val )) == val)
             break;
     }
     return TRUE;
@@ -344,7 +358,7 @@ void WINAPI RtlInitializeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
-    if (interlocked_dec_if_nonzero( (int *)&variable->Ptr ))
+    if (interlocked_dec_if_nonzero( (atomic_t *)&variable->Ptr ))
         gNtReleaseKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
 }
 
@@ -355,7 +369,7 @@ void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeAllConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
-    int val = interlocked_xchg( (int *)&variable->Ptr, 0 );
+    int val = interlocked_xchg( (atomic_t *)&variable->Ptr, 0 );
     while (val-- > 0)
         gNtReleaseKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
 }
@@ -380,13 +394,13 @@ WINAPI RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable, RTL_CRITIC
                                     const LARGE_INTEGER *timeout )
 {
     NTSTATUS status;
-    interlocked_xchg_add( (int *)&variable->Ptr, 1 );
+    interlocked_xchg_add( (atomic_t *)&variable->Ptr, 1 );
     gRtlLeaveCriticalSection( crit );
 
     status = gNtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, timeout );
     if (status != STATUS_SUCCESS)
     {
-        if (!interlocked_dec_if_nonzero( (int *)&variable->Ptr ))
+        if (!interlocked_dec_if_nonzero( (atomic_t *)&variable->Ptr ))
             status = gNtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
     }
 
@@ -417,7 +431,7 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
                                               const LARGE_INTEGER *timeout, ULONG flags )
 {
     NTSTATUS status;
-    interlocked_xchg_add( (int *)&variable->Ptr, 1 );
+    interlocked_xchg_add( (atomic_t *)&variable->Ptr, 1 );
 
     if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
         RtlReleaseSRWLockShared( lock );
@@ -427,7 +441,7 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     status = gNtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, timeout );
     if (status != STATUS_SUCCESS)
     {
-        if (!interlocked_dec_if_nonzero( (int *)&variable->Ptr ))
+        if (!interlocked_dec_if_nonzero( (atomic_t *)&variable->Ptr ))
             status = gNtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
     }
 
@@ -445,13 +459,13 @@ BOOL init_sync()
     HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
     if(hNtdll)
     {
-        gNtClose = GetProcAddress(hNtdll, "NtClose");
-        gNtCreateKeyedEvent = GetProcAddress(hNtdll, "NtCreateKeyedEvent");
-        gNtReleaseKeyedEvent = GetProcAddress(hNtdll, "NtReleaseKeyedEvent");
-        gNtWaitForKeyedEvent = GetProcAddress(hNtdll, "NtWaitForKeyedEvent");
-        gRtlEnterCriticalSection = GetProcAddress(hNtdll, "RtlEnterCriticalSection");
-        gRtlLeaveCriticalSection = GetProcAddress(hNtdll, "RtlLeaveCriticalSection");
-        gRtlRaiseStatus = GetProcAddress(hNtdll, "RtlRaiseStatus");
+        gNtClose = (NTCLOSE)GetProcAddress(hNtdll, "NtClose");
+        gNtCreateKeyedEvent = (NTCREATEKEYEDEVENT)GetProcAddress(hNtdll, "NtCreateKeyedEvent");
+        gNtReleaseKeyedEvent = (NTRELEASEKEYEDEVENT)GetProcAddress(hNtdll, "NtReleaseKeyedEvent");
+        gNtWaitForKeyedEvent = (NTWAITFORKEYEDEVENT)GetProcAddress(hNtdll, "NtWaitForKeyedEvent");
+        gRtlEnterCriticalSection =(RTLENTERCRITICALSECTION)GetProcAddress(hNtdll, "RtlEnterCriticalSection");
+        gRtlLeaveCriticalSection = (RTLLEAVECRITICALSECTION)GetProcAddress(hNtdll, "RtlLeaveCriticalSection");
+        gRtlRaiseStatus = (RTLRAISESTATUS)GetProcAddress(hNtdll, "RtlRaiseStatus");
 
         if(gNtClose && gNtCreateKeyedEvent && gNtReleaseKeyedEvent
            && gNtWaitForKeyedEvent && gRtlEnterCriticalSection

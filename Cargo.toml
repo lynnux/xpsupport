@@ -8,6 +8,7 @@ link = "minhook"
 [dependencies]
 
 [lib]
+name = "xpsupport"
 crate-type = ["cdylib"]
 
 [build-dependencies]

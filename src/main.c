@@ -43,16 +43,16 @@ static struct {
     FARPROC address;
 }proc_map[] =
 {
-    {"AcquireSRWLockExclusive", RtlAcquireSRWLockExclusive},
-    {"AcquireSRWLockShared", RtlAcquireSRWLockShared},
-    {"ReleaseSRWLockExclusive", RtlReleaseSRWLockExclusive},
-    {"ReleaseSRWLockShared", RtlReleaseSRWLockShared},
-    {"TryAcquireSRWLockExclusive", RtlTryAcquireSRWLockExclusive},
-    {"TryAcquireSRWLockShared", RtlTryAcquireSRWLockShared},
+    {"AcquireSRWLockExclusive", (FARPROC)RtlAcquireSRWLockExclusive},
+    {"AcquireSRWLockShared", (FARPROC)RtlAcquireSRWLockShared},
+    {"ReleaseSRWLockExclusive", (FARPROC)RtlReleaseSRWLockExclusive},
+    {"ReleaseSRWLockShared", (FARPROC)RtlReleaseSRWLockShared},
+    {"TryAcquireSRWLockExclusive", (FARPROC)RtlTryAcquireSRWLockExclusive},
+    {"TryAcquireSRWLockShared", (FARPROC)RtlTryAcquireSRWLockShared},
 
-    {"SleepConditionVariableSRW", RtlSleepConditionVariableSRW},
-    {"WakeAllConditionVariable", RtlWakeAllConditionVariable},
-    {"WakeConditionVariable", RtlWakeConditionVariable},
+    {"SleepConditionVariableSRW", (FARPROC)RtlSleepConditionVariableSRW},
+    {"WakeAllConditionVariable", (FARPROC)RtlWakeAllConditionVariable},
+    {"WakeConditionVariable", (FARPROC)RtlWakeConditionVariable},
 
     {0, 0}
 };
@@ -88,11 +88,11 @@ void dllmain()
             gKernel32 = GetModuleHandleW(L"kernel32.dll");
             if(gKernel32)
             {
-                OrgGetProcAddress = GetProcAddress(gKernel32, "GetProcAddress");
+                OrgGetProcAddress = (GETPROCADDRESS)GetProcAddress(gKernel32, "GetProcAddress");
                 if(OrgGetProcAddress)
                 {
                     // 第1跟第3参数必须不一样，否则MH_EnableHook返回4
-                    if(MH_OK == MH_CreateHook(OrgGetProcAddress, HookGetProcAddress, &OrgGetProcAddress2))
+                    if(MH_OK == MH_CreateHook(OrgGetProcAddress, HookGetProcAddress, (LPVOID*)&OrgGetProcAddress2))
                     {
                         MH_EnableHook(OrgGetProcAddress);
                     }

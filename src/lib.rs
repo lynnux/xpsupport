@@ -2,6 +2,10 @@
 #![no_std]                      // dylib会跟主程序冲突
 #![no_core]
 
+#![allow(private_no_mangle_fns)]
+#![allow(unused_macros)]
+#![allow(unused_attributes)]
+
 // https://github.com/rust-lang/rfcs/blob/master/text/1510-cdylib.md
 #[no_mangle] pub extern "C" fn xpinit() {}
 
