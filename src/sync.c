@@ -40,13 +40,16 @@
 #define interlocked_xchg InterlockedExchange
 #define interlocked_xchg_add InterlockedExchangeAdd
 
-#if !defined(_MSC_VER)
+#define STATUS_SUCCESS ((NTSTATUS)0x00000000L) 
+
+#if defined(_MSC_VER)
+#define inline __inline
+#else
 typedef struct _RTL_SRWLOCK { PVOID Ptr; } RTL_SRWLOCK,*PRTL_SRWLOCK;
 typedef PRTL_SRWLOCK PSRWLOCK;
 typedef struct _RTL_CONDITION_VARIABLE { PVOID Ptr; } RTL_CONDITION_VARIABLE,*PRTL_CONDITION_VARIABLE;
 typedef PRTL_CONDITION_VARIABLE PCONDITION_VARIABLE;
 typedef LONG NTSTATUS, *PNTSTATUS;
-#define STATUS_SUCCESS ((NTSTATUS)0x00000000L) 
 #define RTL_CONDITION_VARIABLE_LOCKMODE_SHARED 0x1
 #endif
 
