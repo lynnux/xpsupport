@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["lynnux <lynnux@qq.com>"]
 build = "build.rs"
 link = "minhook"
+keywords = ["xp", "xpsupport", "RWLock", "Condvar", "windows"]
+license = "MIT"
+description = "Using a hack way to support xp, only need to link one dll. More details please visit repository."
+repository = "https://github.com/lynnux/xpsupport"
 
 [dependencies]
 
