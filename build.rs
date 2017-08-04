@@ -12,7 +12,6 @@ fn main() {
     let parts = target.splitn(4, '-').collect::<Vec<_>>();
     let arch = parts[0];
     let sys  = parts[2];
-    let last = parts[3];
 
     if sys != "windows" {
         panic!("Platform '{}' not supported.", sys);
@@ -34,20 +33,10 @@ fn main() {
         .file(src_dir.join("trampoline.c"))
         .file(src_dir.join(hde))
         .file(src_dir2.join("main.c"))
-    // .file(src_dir2.join("gthread-win32.c"))
-    // .file(src_dir2.join("condvar.c"))
-    // .file(src_dir2.join("srw.c"))
         .file(src_dir2.join("sync.c"))
         .compile("libminhook.a");
 
     println!("cargo:rerun-if-changed=src/minhook/src/");
     println!("cargo:rerun-if-changed=src/");
     println!("cargo:rustc-link-lib=kernel32");
-
-    if last == "msvc"
-    {
-    }
-    else
-    {
-    }    
 }

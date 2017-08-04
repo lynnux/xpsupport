@@ -70,7 +70,7 @@ FARPROC WINAPI HookGetProcAddress(HMODULE hModule, LPCSTR  lpProcName)
                 return proc_map[i].address;
             }
         }
-        while(proc_map[i].address);
+        while(proc_map[++i].address);
     }
     return ret;
 }
