@@ -17,7 +17,11 @@ fn main()
 	//...
 }	
 ```
-after `cargo build`, you will found `xpsupport-xxxxxxxxxxx.dll` in `target\debug\deps`, please copy it to the main exe directory and rename it to `xpsupport.dll` , then you can run main exe with `xpsupport.dll` in XP!
+then `cargo build`, and this will fail you will see error like: `ld: cannot find -lxpsupport`, this due to a cargo bug [3674](https://github.com/rust-lang/cargo/issues/3674)
+
+you need found `xpsupport-xxxxxxxxxxx.dll` in `target\debug\deps`, please copy and rename it to `xpsupport.dll` in the same directory, 
+
+then rebuild, this should be OK, finally you can run main exe with `xpsupport-xxxxxxxxxxx.dll` in XP!
 
 ## How does it work?
 
