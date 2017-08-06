@@ -1,4 +1,5 @@
 ## Usage
+Make sure use gnu toolchain (it's OK with msvc, but need more step not described here).
 
 Add this to your Cargo.toml:
 ```
