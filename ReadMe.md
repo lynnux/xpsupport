@@ -39,6 +39,5 @@ All implemented functions all list as below:
 * WakeAllConditionVariable
 * WakeConditionVariable
 
-## Drawbacks
-
-Althrough it can work, but has some performance issues. So if you want to support XP, please avoid use RWLock, Condvar, Barrier, and mpsc::* like channel/sync_channel, you can try another replacement library like [parking_lot](https://github.com/Amanieu/parking_lot), which implemeted Mutex/Condvar/RwLock etc.
+## Testing Result
+Only `mpsc::stress_recv_timeout_shared` seems dead block, other tests from libstd/sync all passed! [Test code](https://github.com/lynnux/xpsupport-sys/tree/master/test)

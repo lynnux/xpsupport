@@ -1,12 +1,6 @@
 ﻿#include <windows.h>
+#include "sync.h"
 #include "minhook/include/MinHook.h"
-
-#if !defined(_MSC_VER)
-typedef struct _RTL_SRWLOCK { PVOID Ptr; } RTL_SRWLOCK,*PRTL_SRWLOCK;
-typedef PRTL_SRWLOCK PSRWLOCK;
-typedef struct _RTL_CONDITION_VARIABLE { PVOID Ptr; } RTL_CONDITION_VARIABLE,*PRTL_CONDITION_VARIABLE;
-typedef PRTL_CONDITION_VARIABLE PCONDITION_VARIABLE;
-#endif
 
 /*
   rust没有使用InitializeConditionVariable，反汇编看该函数只是把RTL_CONDITION_VARIABLE.Ptr置0，跟rust里的new逻辑一样
@@ -20,18 +14,6 @@ typedef PRTL_CONDITION_VARIABLE PCONDITION_VARIABLE;
 /* 此外还有一个Extended XP https://ryanvm.net/forum/viewtopic.php?t=10631 据说开源了*/
 
 // gnu版本需要把mingw-w64里的libntdll.a拷贝放入
-extern BOOL init_sync();
-    
-extern VOID WINAPI RtlAcquireSRWLockExclusive(PSRWLOCK Lock);
-extern VOID WINAPI RtlAcquireSRWLockShared(PSRWLOCK Lock);
-extern VOID WINAPI RtlReleaseSRWLockExclusive(PSRWLOCK Lock);
-extern VOID WINAPI RtlReleaseSRWLockShared(PSRWLOCK Lock);
-extern BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock );
-extern BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock );
-
-extern BOOL WINAPI RtlSleepConditionVariableSRW(PCONDITION_VARIABLE ConditionVariable, PSRWLOCK Lock, DWORD Timeout, ULONG Flags);
-extern VOID WINAPI RtlWakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
-extern VOID WINAPI RtlWakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 
 typedef FARPROC (WINAPI *GETPROCADDRESS)(HMODULE hModule, LPCSTR  lpProcName);
 GETPROCADDRESS OrgGetProcAddress = 0;
@@ -50,7 +32,7 @@ static struct {
     {"TryAcquireSRWLockExclusive", (FARPROC)RtlTryAcquireSRWLockExclusive},
     {"TryAcquireSRWLockShared", (FARPROC)RtlTryAcquireSRWLockShared},
 
-    {"SleepConditionVariableSRW", (FARPROC)RtlSleepConditionVariableSRW},
+    {"SleepConditionVariableSRW", (FARPROC)SleepConditionVariableSRW},
     {"WakeAllConditionVariable", (FARPROC)RtlWakeAllConditionVariable},
     {"WakeConditionVariable", (FARPROC)RtlWakeConditionVariable},
 

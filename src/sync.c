@@ -22,9 +22,7 @@
  */
 
 #include <windows.h>
-#define  STATUS_RESOURCE_NOT_OWNED 0xC0000264
-#define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
-#define ASSERT
+#include "sync.h"
 
 #if defined(_LP64) || defined(_WIN64) || defined(__MINGW64__)
 typedef long long atomic_t;
@@ -54,19 +52,9 @@ atomic_t interlocked_cmpxchg( atomic_t *dest, atomic_t xchg, atomic_t compare )
 #define interlocked_xchg_add __sync_fetch_and_add
 #endif
 
-#define STATUS_SUCCESS ((NTSTATUS)0x00000000L) 
-
 #if defined(_MSC_VER)
 #define inline __inline
-#else
-typedef struct _RTL_SRWLOCK { PVOID Ptr; } RTL_SRWLOCK,*PRTL_SRWLOCK;
-typedef PRTL_SRWLOCK PSRWLOCK;
-typedef struct _RTL_CONDITION_VARIABLE { PVOID Ptr; } RTL_CONDITION_VARIABLE,*PRTL_CONDITION_VARIABLE;
-typedef PRTL_CONDITION_VARIABLE PCONDITION_VARIABLE;
-typedef LONG NTSTATUS, *PNTSTATUS;
-#define RTL_CONDITION_VARIABLE_LOCKMODE_SHARED 0x1
 #endif
-
 
 typedef NTSTATUS (NTAPI *NTRELEASEKEYEDEVENT)(
     HANDLE Handle,
@@ -91,6 +79,7 @@ typedef NTSTATUS (NTAPI *NTCLOSE)(HANDLE);
 typedef NTSTATUS (NTAPI *RTLENTERCRITICALSECTION) (RTL_CRITICAL_SECTION* crit);
 typedef NTSTATUS (NTAPI *RTLLEAVECRITICALSECTION) (RTL_CRITICAL_SECTION* crit);
 typedef VOID (NTAPI *RTLRAISESTATUS)(NTSTATUS Status);
+typedef ULONG (WINAPI *RTLNTSTATUSTODOSERROR)(NTSTATUS Status);
 
 NTCLOSE gNtClose = 0;
 NTCREATEKEYEDEVENT gNtCreateKeyedEvent = 0;
@@ -99,6 +88,7 @@ NTWAITFORKEYEDEVENT gNtWaitForKeyedEvent = 0;
 RTLENTERCRITICALSECTION gRtlEnterCriticalSection = 0;
 RTLLEAVECRITICALSECTION gRtlLeaveCriticalSection = 0;
 RTLRAISESTATUS gRtlRaiseStatus = 0;
+RTLNTSTATUSTODOSERROR gRtlNtStatusToDosError =0;
 
 HANDLE keyed_event = NULL;
 
@@ -127,6 +117,12 @@ static inline atomic_t interlocked_dec_if_nonzero(atomic_t *dest )
 #define srwlock_key_shared(lock)      (&lock->Ptr)
 #endif
 
+static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, DWORD timeout )
+{
+    if (timeout == INFINITE) return NULL;
+    pTime->QuadPart = (ULONGLONG)timeout * -10000;
+    return pTime;
+}
 
 static inline void srwlock_check_invalid( unsigned int val )
 {
@@ -427,6 +423,7 @@ WINAPI RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable, RTL_CRITIC
  * NOTES
  *  the behaviour is undefined if the thread doesn't own the lock.
  */
+
 NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock,
                                               const LARGE_INTEGER *timeout, ULONG flags )
 {
@@ -452,6 +449,20 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     return status;
 }
 
+BOOL WINAPI SleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock, DWORD timeout, ULONG flags )
+{
+    NTSTATUS status;
+    LARGE_INTEGER time;
+
+    status = RtlSleepConditionVariableSRW( variable, lock, get_nt_timeout( &time, timeout ), flags );
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError(gRtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}
 
 // for avoid trouble on gnu, dynamic get functions which depends ntdll
 BOOL init_sync()
@@ -466,10 +477,11 @@ BOOL init_sync()
         gRtlEnterCriticalSection =(RTLENTERCRITICALSECTION)GetProcAddress(hNtdll, "RtlEnterCriticalSection");
         gRtlLeaveCriticalSection = (RTLLEAVECRITICALSECTION)GetProcAddress(hNtdll, "RtlLeaveCriticalSection");
         gRtlRaiseStatus = (RTLRAISESTATUS)GetProcAddress(hNtdll, "RtlRaiseStatus");
-
+        gRtlNtStatusToDosError = (RTLNTSTATUSTODOSERROR)GetProcAddress(hNtdll, "RtlNtStatusToDosError");
+        
         if(gNtClose && gNtCreateKeyedEvent && gNtReleaseKeyedEvent
            && gNtWaitForKeyedEvent && gRtlEnterCriticalSection
-           && gRtlLeaveCriticalSection && gRtlRaiseStatus)
+           && gRtlLeaveCriticalSection && gRtlRaiseStatus && gRtlNtStatusToDosError)
         {
             RtlpInitializeKeyedEvent();
             return TRUE;            
