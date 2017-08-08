@@ -6,3 +6,4 @@ GPATH
 GRTAGS
 GTAGS
 stuff/*
+src/build/*

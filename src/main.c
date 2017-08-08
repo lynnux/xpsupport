@@ -32,7 +32,7 @@ static struct {
     {"TryAcquireSRWLockExclusive", (FARPROC)RtlTryAcquireSRWLockExclusive},
     {"TryAcquireSRWLockShared", (FARPROC)RtlTryAcquireSRWLockShared},
 
-    {"SleepConditionVariableSRW", (FARPROC)SleepConditionVariableSRW},
+    { "SleepConditionVariableSRW", (FARPROC)MySleepConditionVariableSRW },
     {"WakeAllConditionVariable", (FARPROC)RtlWakeAllConditionVariable},
     {"WakeConditionVariable", (FARPROC)RtlWakeConditionVariable},
 
