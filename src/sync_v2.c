@@ -110,10 +110,11 @@ void __stdcall RtlBackoff(unsigned int *pCount);
 void __stdcall RtlpOptimizeSRWLockList(SRWLOCK* pSRWLock, size_t st);
 
 #if !defined(_MSC_VER)
-static __inline void _mm_pause (void)
-{
-    __asm__ __volatile__ ("pause;");
-}
+__inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))  
+_mm_pause (void)  
+{  
+    __asm__ __volatile__ ("pause" : : :"memory");  
+}  
 #endif
 
 static inline PLARGE_INTEGER get_nt_timeout( PLARGE_INTEGER pTime, DWORD timeout )
