@@ -33,10 +33,13 @@ fn main() {
         .file(src_dir.join("trampoline.c"))
         .file(src_dir.join(hde))
         .file(src_dir2.join("main.c"))
-        .file(src_dir2.join("sync.c"))
+    // .file(src_dir2.join("sync.c"))
+        .file(src_dir2.join("sync_v2.c"))
         .compile("libminhook.a");
 
     println!("cargo:rerun-if-changed=src/minhook/src/");
     println!("cargo:rerun-if-changed=src/");
     println!("cargo:rustc-link-lib=kernel32");
+    println!("cargo:rustc-link-lib=User32");
+
 }
