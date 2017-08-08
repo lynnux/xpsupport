@@ -63,10 +63,10 @@ void dllmain()
     if(!inited)
     {
         inited = TRUE;
+        MH_Initialize();
+
         if(init_sync())
         {
-            MH_Initialize();
-
             gKernel32 = GetModuleHandleW(L"kernel32.dll");
             if(gKernel32)
             {
