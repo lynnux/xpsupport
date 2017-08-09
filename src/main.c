@@ -42,9 +42,9 @@ static struct {
 FARPROC WINAPI HookGetProcAddress(HMODULE hModule, LPCSTR  lpProcName)
 {
     FARPROC ret = OrgGetProcAddress2(hModule, lpProcName);
-    if(!ret && (hModule == gKernel32))
+    if(hModule == gKernel32)
     {
-        int i =0;
+        int i = 0;
         do
         {
             if(0 == strcmp(lpProcName, proc_map[i].procName))
@@ -63,6 +63,17 @@ void dllmain()
     if(!inited)
     {
         inited = TRUE;
+
+        OSVERSIONINFOEX os;
+        os.dwOSVersionInfoSize = sizeof(os);
+        GetVersionEx((OSVERSIONINFO *)&os);
+        if(!(os.dwMajorVersion < 6 || // xp 5.1
+             (os.dwMajorVersion == 6 && os.dwMinorVersion == 0) //vista 6.0
+               ))
+        {
+            return;
+        }
+        
         if(init_sync())
         {
             MH_Initialize();
