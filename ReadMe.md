@@ -1,7 +1,7 @@
 ## Usage
-Make sure use gnu toolchain (it's OK with msvc, but need more step not described here).
+Make sure use gnu toolchain (it's OK with msvc, but need more steps not described here).
 
-Add this to your Cargo.toml:
+add this to your Cargo.toml:
 ```
 [dependencies]
 xpsupport-sys = "0.1"
@@ -18,15 +18,15 @@ fn main()
 	//...
 }	
 ```
-then `cargo build`, and this will fail you will see error like: `ld: cannot find -lxpsupport`, this due to a cargo bug [3674](https://github.com/rust-lang/cargo/issues/3674)
+then `cargo build`, you will see error like: `ld: cannot find -lxpsupport`, this relate to a cargo bug [3674](https://github.com/rust-lang/cargo/issues/3674).
 
-you need found `xpsupport-xxxxxxxxxxx.dll` in `target\debug\deps`, please copy and rename it to `xpsupport.dll` in the same directory, 
+please find `xpsupport-xxxxxxxxxxx.dll` in `target\debug\deps`, copy the file and rename to `xpsupport.dll` in the same directory,
 
-then rebuild, this should be OK, finally you can run main exe with `xpsupport-xxxxxxxxxxx.dll` in XP!
+rebuild, this should be OK now, copy `xpsupport-xxxxxxxxxxx.dll` to the location where main exe exist.
 
 ## How does it work?
 
-Actually, `xpsupport_sys::init();` do nothing at all. The main idea it that `DllMain` in `xpsupport.dll` running before `fn main`, the `DllMain` will hook `GetProcAddress`, and when rust runtime library call `GetProcAddress` to get like `AcquireSRWLockShared`, it will return a funtions which not implemented on XP.
+Actually, `xpsupport_sys::init();` do nothing. The main idea is that `DllMain` in `xpsupport.dll` running before `fn main`, and will hook `GetProcAddress`. When rust runtime library call `GetProcAddress` to get funtions like `AcquireSRWLockShared`, it will return the implemented code for XP and vista.
 
 All implemented functions all list as below:
 
@@ -40,4 +40,4 @@ All implemented functions all list as below:
 * WakeConditionVariable
 
 ## Testing Result
-Only `mpsc::stress_recv_timeout_shared` seems dead block, other tests from libstd/sync all passed! [Test code](https://github.com/lynnux/xpsupport-sys/tree/master/test)
+Only `mpsc::stress_recv_timeout_shared` seems deadlock, other tests from libstd/sync all passed! [Test code](https://github.com/lynnux/xpsupport-sys/tree/master/test)
