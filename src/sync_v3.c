@@ -1,4 +1,5 @@
 ﻿/* 
+   new idea that use functions from win7 ntdll, however testing failed
    新思路：自己加载ntdll，ntdll是依赖最小的dll，主要注意：
    1.只能用win7，vista缺少Try函数，win8用ZwWaitForAlertByThreadId(win8新增)代替了NtWaitForKeyedEvent
    1.少量Nt调用修正，主要是Nt序号跟XP不一样

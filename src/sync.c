@@ -354,8 +354,17 @@ void WINAPI RtlInitializeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
+    char time[50];
+    wsprintfA(time, "call RtlWakeConditionVariable v:%d", variable->Ptr);
+    OutputDebugString(time);
     if (interlocked_dec_if_nonzero( (atomic_t *)&variable->Ptr ))
-        gNtReleaseKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
+    {
+        wsprintfA(time, "begin RtlWakeConditionVariable v:%d", variable->Ptr);
+        OutputDebugString(time);
+        NTSTATUS s = gNtReleaseKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
+        wsprintfA(time, "after RtlWakeConditionVariable s:%d", s);
+        OutputDebugString(time);
+    }
 }
 
 /***********************************************************************
@@ -365,9 +374,13 @@ void WINAPI RtlWakeConditionVariable( RTL_CONDITION_VARIABLE *variable )
  */
 void WINAPI RtlWakeAllConditionVariable( RTL_CONDITION_VARIABLE *variable )
 {
+    OutputDebugString("1 RtlWakeAllConditionVariable");
     int val = interlocked_xchg( (atomic_t *)&variable->Ptr, 0 );
     while (val-- > 0)
+    {
+        OutputDebugString("2 RtlWakeAllConditionVariable");
         gNtReleaseKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
+    }
 }
 
 /***********************************************************************
@@ -430,29 +443,29 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     NTSTATUS status;
     interlocked_xchg_add( (atomic_t *)&variable->Ptr, 1 );
 
-    OutputDebugString("1 RtlSleepConditionVariableSRW");
+    /* OutputDebugString("1 RtlSleepConditionVariableSRW"); */
     if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
         RtlReleaseSRWLockShared( lock );
     else
         RtlReleaseSRWLockExclusive( lock );
 
-    OutputDebugString("2 RtlSleepConditionVariableSRW");
+    /* OutputDebugString("2 RtlSleepConditionVariableSRW"); */
 
     char time[50];
-    wsprintfA(time, "f:%d, t:h:%d, l:%d, p:%p, v:%d", flags, timeout->HighPart, timeout->LowPart, &variable->Ptr, variable->Ptr);
+    wsprintfA(time, "begin1 RtlSleepConditionVariableSRW v:%d", variable->Ptr);
     OutputDebugString(time);
     status = gNtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, timeout );
-    OutputDebugString("3 RtlSleepConditionVariableSRW");
+    wsprintfA(time, "after1 RtlSleepConditionVariableSRW s:%d", status);
+    OutputDebugString(time);
 
     if (status != STATUS_SUCCESS)
     {
         if (!interlocked_dec_if_nonzero( (atomic_t *)&variable->Ptr ))
         {
-            wsprintfA(time, "s:%d, v:%d", status, variable->Ptr);
+            wsprintfA(time, "begin2 RtlSleepConditionVariableSRW v:%d", variable->Ptr);
             OutputDebugString(time);
-            OutputDebugString("4 RtlSleepConditionVariableSRW");
-            status = gNtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
-            OutputDebugString("5 RtlSleepConditionVariableSRW");
+            status = gNtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, timeout );
+            OutputDebugString("after2 RtlSleepConditionVariableSRW");
         }
     }
 
@@ -463,7 +476,7 @@ NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, 
     return status;
 }
 
-BOOL WINAPI SleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock, DWORD timeout, ULONG flags )
+BOOL WINAPI MySleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock, DWORD timeout, ULONG flags )
 {
     NTSTATUS status;
     LARGE_INTEGER time;

@@ -33,8 +33,8 @@ fn main() {
         .file(src_dir.join("trampoline.c"))
         .file(src_dir.join(hde))
         .file(src_dir2.join("main.c"))
-    // .file(src_dir2.join("sync.c"))
-        .file(src_dir2.join("sync_v3.c"))
+    .file(src_dir2.join("sync.c"))
+    // .file(src_dir2.join("sync_v3.c"))
         .compile("libminhook.a");
 
     println!("cargo:rerun-if-changed=src/minhook/src/");

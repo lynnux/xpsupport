@@ -1,5 +1,6 @@
-﻿/* 根据测试发现RtlSleepConditionVariableSRW有问题，但实在无法解决
-   网上发现有篇国人写的文章http://blog.csdn.net/yichigo/article/details/36898561，这直接就是逆向还原代码啊，牛B，不过还是需要自己去道向Try开头函数
+﻿/* from http://blog.csdn.net/yichigo/article/details/36898561, only implemment SRW
+   根据测试发现RtlSleepConditionVariableSRW有问题，但实在无法解决
+   网上发现有篇国人写的文章，这直接就是逆向还原代码啊，牛B，不过还是需要自己去道向Try开头函数
    srw的实现跟内核的pushlock是差不多的，关键词RtlBackoff https://github.com/mic101/windows/blob/master/WRK-v1.2/base/ntos/ex/pushlock.c
    连flag的值都一样
 */
