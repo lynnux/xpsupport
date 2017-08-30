@@ -40,4 +40,4 @@ All implemented functions all list as below:
 * WakeConditionVariable
 
 ## Testing Result
-Only `mpsc::stress_recv_timeout_shared` seems dead block, other tests from libstd/sync all passed! [Test code](https://github.com/lynnux/xpsupport-sys/tree/master/test)
+Only `mpsc::stress_recv_timeout_shared` seems dead block, other tests from libstd/sync all passed! [Test code](https://github.com/lynnux/xpsupport-sys/tree/master/test), so you may consider [parking_lot](https://github.com/Amanieu/parking_lot) crate as the sync library.
