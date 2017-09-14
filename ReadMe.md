@@ -28,7 +28,7 @@ for msvc: in `deps`, find `xpsupport-xxxxxxxxxxx.dll.lib`, copy and rename to `x
 
 ## How does it work?
 
-Actually, `xpsupport_sys::init();` do nothing. The main idea is that `DllMain` in `xpsupport.dll` running before `fn main`, and will hook `GetProcAddress`. When rust runtime library call `GetProcAddress` to get funtions like `AcquireSRWLockShared`, it will return the implemented code for XP and vista.
+Actually, `xpsupport_sys::init();` do nothing. The main idea is that `DllMain` in `xpsupport.dll` running before `fn main`, and will hook `GetProcAddress`. When rust runtime library call `GetProcAddress` to get funtions like `AcquireSRWLockShared`, it will return the implemented code for XP and vista (mainly code are from wine project, I ported to support mingw/msvc and x64 platform)
 
 All implemented functions are below:
 
