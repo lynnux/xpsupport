@@ -1,5 +1,5 @@
 ## Usage
-Make sure use gnu toolchain (it's OK with msvc, but need more steps not described here).
+Make sure use gnu toolchain (help needed for msvc, see below)
 
 add this to your Cargo.toml:
 ```
