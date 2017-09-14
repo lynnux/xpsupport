@@ -1,47 +1,52 @@
-﻿#![feature(lang_items, no_core)]
-#![no_std]                      // dylib会跟主程序冲突
-#![no_core]
+﻿// For one, you can build a #![no_std] library on stable, but not a binary. so disable no std on stable channel
+
+#![cfg_attr(is_nightly, feature(lang_items, no_core))]
+#![cfg_attr(is_nightly, no_std)] // dylib会跟主程序冲突
+#![cfg_attr(is_nightly, no_core)]
 
 #![allow(private_no_mangle_fns)]
 #![allow(unused_macros)]
 #![allow(unused_attributes)]
+#![allow(dead_code)]
 
 // https://github.com/rust-lang/rfcs/blob/master/text/1510-cdylib.md
 #[no_mangle] pub extern "C" fn xpinit() {}
 
 // 在没有实际代码里，msvc版本编译最NB，连dll import都没有。而gnu则把没有调用的minhook代码都加进来了
 
-#[lang = "eh_personality"] extern fn eh_personality() {}
-#[lang = "panic_fmt"] fn panic_fmt() -> ! { loop {} }
+#[cfg_attr(is_nightly, lang = "eh_personality")]
+extern fn eh_personality() {}
+#[cfg_attr(is_nightly, lang = "panic_fmt")]
+fn panic_fmt() -> ! { loop {} }
 
-#[no_mangle]
+#[cfg_attr(is_nightly, no_mangle)]
 extern fn __mulodi4(){}
-#[no_mangle]
+#[cfg_attr(is_nightly, no_mangle)]
 extern fn __muloti4(){}
-#[no_mangle]
+#[cfg_attr(is_nightly, no_mangle)]
 extern fn __multi3(){}
-#[no_mangle]
+#[cfg_attr(is_nightly, no_mangle)]
 extern fn __udivti3(){}
-#[no_mangle]
+#[cfg_attr(is_nightly, no_mangle)]
 extern fn __umodti3(){}
 
 // copy from rust-master\src\libcore\marker.rs
-#[lang = "sized"]
+#[cfg_attr(is_nightly, lang = "sized")]
 trait Sized {
     // Empty.
 }
 
-#[lang = "copy"]
+#[cfg_attr(is_nightly, lang = "copy")]
 trait Copy {
     // Empty.
 }
 
-#[lang = "send"]
+#[cfg_attr(is_nightly, lang = "send")]
 unsafe trait Send {
     // empty.
 }
 
-#[lang = "freeze"]
+#[cfg_attr(is_nightly, lang = "freeze")]
 trait Freeze {
     // Empty.
 }
@@ -60,11 +65,13 @@ macro_rules! if_msvc {
 }
 
 if_gnu!{
-    #[lang = "eh_unwind_resume"]
+    #[cfg_attr(is_nightly, lang = "eh_unwind_resume")]
     fn eh_unwind_resume(){}
-    #[no_mangle]
+    
+    #[cfg_attr(is_nightly, no_mangle)]
     pub extern fn rust_eh_register_frames(){}
-    #[no_mangle]
+
+    #[cfg_attr(is_nightly, no_mangle)]
     pub extern fn rust_eh_unregister_frames(){}
 }
 

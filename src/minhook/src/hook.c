@@ -237,10 +237,10 @@ static void ProcessThreadIPs(HANDLE hThread, UINT pos, BOOL enable)
 }
 
 //-------------------------------------------------------------------------
-HANDLE WINAPI OpenThread(
-     DWORD dwDesiredAccess,
-      BOOL  bInheritHandle,
-      DWORD dwThreadId
+WINBASEAPI HANDLE WINAPI OpenThread(
+    DWORD dwDesiredAccess,
+    BOOL  bInheritHandle,
+    DWORD dwThreadId
     );
 static VOID EnumerateThreads(PFROZEN_THREADS pThreads)
 {

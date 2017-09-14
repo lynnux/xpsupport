@@ -1,9 +1,10 @@
-extern crate gcc;
+﻿extern crate gcc;
+extern crate rustc_version;
 
 use std::env;
 use std::path::Path;
-
 use gcc::Config;
+use rustc_version::Channel;
 
 fn main() {
     let root_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -36,7 +37,13 @@ fn main() {
         .file(src_dir2.join("sync.c"))
         .compile("libminhook.a");
 
+    println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/minhook/src/");
     println!("cargo:rerun-if-changed=src/");
     println!("cargo:rustc-link-lib=kernel32");
+
+    let version = rustc_version::version_meta().unwrap();
+    if version.channel == Channel::Nightly {
+        println!("cargo:rustc-cfg=is_nightly");
+    }
 }
