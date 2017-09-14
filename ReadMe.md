@@ -1,5 +1,4 @@
 ## Usage
-Make sure use gnu toolchain (help needed for msvc, see below)
 
 add this to your Cargo.toml:
 ```
@@ -18,13 +17,9 @@ fn main()
 	//...
 }	
 ```
-then `cargo build`, you will see error like: `ld: cannot find -lxpsupport`, this relate to a cargo bug [3674](https://github.com/rust-lang/cargo/issues/3674).
+then `cargo build`, you will get error like: `ld: cannot find -lxpsupport`, goto `target\debug\deps` directory, find `xpsupport-xxxxxxxxxxx.dll`, copy and rename to `xpsupport.dll` in the same directory, rebuild, this should be OK now, copy `xpsupport-xxxxxxxxxxx.dll` to the location where main exe exist.
 
-please find `xpsupport-xxxxxxxxxxx.dll` in `target\debug\deps`, copy the file and rename to `xpsupport.dll` in the same directory,
-
-rebuild, this should be OK now, copy `xpsupport-xxxxxxxxxxx.dll` to the location where main exe exist.
-
-for msvc: in `deps`, find `xpsupport-xxxxxxxxxxx.dll.lib`, copy and rename to `xpsupport.lib`, then rebuild should be OK, it will run with `xpsupport-xxxxxxxxxxx.dll`. But actually it can't run in xp, see [34407](https://github.com/rust-lang/rust/issues/34407), although `rustc main.rs -C link-args="/subsystem:console,5.01"` maybe work, I don't know how to use this in cargo, so the easy solution is to use gnu toolchain.
+for MSVC : build with command: `cargo rustc -- -C link-args="/subsystem:console,5.01"` or `cargo rustc --release -- -C link-args="/subsystem:console,5.01"`, goto directory `deps`, find `xpsupport-xxxxxxxxxxx.dll.lib`, copy and rename to `xpsupport.lib`, then rebuild
 
 ## How does it work?
 
