@@ -17,9 +17,9 @@ fn main()
 	//...
 }	
 ```
-then `cargo build`, you will get error like: `ld: cannot find -lxpsupport`, goto `target\debug\deps` directory, find `xpsupport-xxxxxxxxxxx.dll`, copy and rename to `xpsupport.dll` in the same directory, rebuild, this should be OK now, copy `xpsupport-xxxxxxxxxxx.dll` to the location where main exe exist.
+for GNU toolchain: run `cargo build`, you will get error like: `ld: cannot find -lxpsupport`, goto `target\debug\deps` directory, find `xpsupport-xxxxxxxxxxx.dll`, copy and rename to `xpsupport.dll` in the same directory, rebuild, this should be OK now, copy `xpsupport-xxxxxxxxxxx.dll` to the location where main exe exist.
 
-for MSVC : build with command: `cargo rustc -- -C link-args="/subsystem:console,5.01"` or `cargo rustc --release -- -C link-args="/subsystem:console,5.01"`, goto directory `deps`, find `xpsupport-xxxxxxxxxxx.dll.lib`, copy and rename to `xpsupport.lib`, then rebuild
+for MSVC toolchain: build with command: `cargo rustc -- -C link-args="/subsystem:console,5.01"` or `cargo rustc --release -- -C link-args="/subsystem:console,5.01"`, goto directory `deps`, find `xpsupport-xxxxxxxxxxx.dll.lib`, copy and rename to `xpsupport.lib`, then rebuild
 
 ## How does it work?
 
@@ -38,7 +38,7 @@ All implemented functions are below:
 
 ## Testing Result
 Only `mpsc::stress_recv_timeout_shared` seems deadlock, other tests from libstd/sync all passed! [Test code](https://github.com/lynnux/xpsupport-sys/tree/master/test),
-so you may consider [parking_lot](https://github.com/Amanieu/parking_lot) crate as the sync library, it's support XP.
+so you may consider [parking_lot](https://github.com/Amanieu/parking_lot) crate as the sync library or [spin](https://github.com/mvdnes/spin-rs)(only works on nightly), they both support XP.
 
 ## Tips
 - for rust stable toolchain: the `xpsupport.dll` will bigger than nightly build, cause it can't build with no std.
