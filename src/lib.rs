@@ -41,10 +41,10 @@ trait Copy {
     // Empty.
 }
 
-#[cfg_attr(is_nightly, lang = "send")]
-unsafe trait Send {
-    // empty.
-}
+// #[cfg_attr(is_nightly, lang = "send")]
+// unsafe trait Send {
+//     // empty.
+// }
 
 #[cfg_attr(is_nightly, lang = "freeze")]
 trait Freeze {
