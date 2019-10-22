@@ -16,8 +16,6 @@
 
 #[cfg_attr(is_nightly, lang = "eh_personality")]
 extern fn eh_personality() {}
-#[cfg_attr(is_nightly, lang = "panic_fmt")]
-fn panic_fmt() -> ! { loop {} }
 
 #[cfg_attr(is_nightly, no_mangle)]
 extern fn __mulodi4(){}
@@ -40,11 +38,6 @@ trait Sized {
 trait Copy {
     // Empty.
 }
-
-// #[cfg_attr(is_nightly, lang = "send")]
-// unsafe trait Send {
-//     // empty.
-// }
 
 #[cfg_attr(is_nightly, lang = "freeze")]
 trait Freeze {
