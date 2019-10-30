@@ -1,9 +1,8 @@
-﻿extern crate gcc;
+﻿extern crate cc;
 extern crate rustc_version;
 
 use std::env;
 use std::path::Path;
-use gcc::Config;
 use rustc_version::Channel;
 
 fn main() {
@@ -15,7 +14,7 @@ fn main() {
     let sys  = parts[2];
 
     if sys != "windows" {
-        panic!("Platform '{}' not supported.", sys);
+        return
     }
 
     let hde = match arch {
@@ -27,8 +26,7 @@ fn main() {
     let src_dir = Path::new(&root_dir).join("src/minhook/src");
     let src_dir2 = Path::new(&root_dir).join("src");
 
-
-    Config::new()
+    cc::Build::new()
         .file(src_dir.join("buffer.c"))
         .file(src_dir.join("hook.c"))
         .file(src_dir.join("trampoline.c"))

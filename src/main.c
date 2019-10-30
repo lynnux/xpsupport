@@ -95,23 +95,24 @@ void dllmain()
     }
 }
 
-#if defined(_MSC_VER)
-BOOL WINAPI _DllMainCRTStartup(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
-#else
-BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
-#endif
-{
-    switch(ul_reason_for_call) {
-    case DLL_PROCESS_ATTACH:
-        dllmain();
-        break;
+/*
+  #if defined(_MSC_VER)
+  BOOL WINAPI _DllMainCRTStartup(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+  #else
+  BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+  #endif
+  {
+  switch(ul_reason_for_call) {
+  case DLL_PROCESS_ATTACH:
+  dllmain();
+  break;
         
-    case DLL_PROCESS_DETACH:
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-    default:
-        break;
-    }
-    return TRUE;
-}
-
+  case DLL_PROCESS_DETACH:
+  case DLL_THREAD_ATTACH:
+  case DLL_THREAD_DETACH:
+  default:
+  break;
+  }
+  return TRUE;
+  }
+*/

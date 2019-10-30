@@ -1,71 +1,74 @@
-﻿// For one, you can build a #![no_std] library on stable, but not a binary. so disable no std on stable channel
+﻿#![allow(non_upper_case_globals)]
 
-#![cfg_attr(is_nightly, feature(lang_items, no_core))]
-#![cfg_attr(is_nightly, no_std)] // dylib会跟主程序冲突
-#![cfg_attr(is_nightly, no_core)]
+// from https://github.com/rust-lang/libc/blob/master/src/macros.rs
+#[allow(unused_macros)]
+macro_rules! cfg_if {
+    // match if/else chains with a final `else`
+    ($(
+        if #[cfg($($meta:meta),*)] { $($it:item)* }
+    ) else * else {
+        $($it2:item)*
+    }) => {
+        cfg_if! {
+            @__items
+                () ;
+            $( ( ($($meta),*) ($($it)*) ), )*
+                ( () ($($it2)*) ),
+        }
+    };
 
-#![allow(private_no_mangle_fns)]
-#![allow(unused_macros)]
-#![allow(unused_attributes)]
-#![allow(dead_code)]
+    // match if/else chains lacking a final `else`
+    (
+        if #[cfg($($i_met:meta),*)] { $($i_it:item)* }
+        $(
+            else if #[cfg($($e_met:meta),*)] { $($e_it:item)* }
+        )*
+    ) => {
+        cfg_if! {
+            @__items
+                () ;
+            ( ($($i_met),*) ($($i_it)*) ),
+            $( ( ($($e_met),*) ($($e_it)*) ), )*
+                ( () () ),
+        }
+    };
 
-// https://github.com/rust-lang/rfcs/blob/master/text/1510-cdylib.md
-#[no_mangle] pub extern "C" fn xpinit() {}
+    // Internal and recursive macro to emit all the items
+    //
+    // Collects all the negated cfgs in a list at the beginning and after the
+    // semicolon is all the remaining items
+    (@__items ($($not:meta,)*) ; ) => {};
+    (@__items ($($not:meta,)*) ; ( ($($m:meta),*) ($($it:item)*) ),
+     $($rest:tt)*) => {
+        // Emit all items within one block, applying an approprate #[cfg]. The
+        // #[cfg] will require all `$m` matchers specified and must also negate
+        // all previous matchers.
+        cfg_if! { @__apply cfg(all($($m,)* not(any($($not),*)))), $($it)* }
 
-// 在没有实际代码里，msvc版本编译最NB，连dll import都没有。而gnu则把没有调用的minhook代码都加进来了
+        // Recurse to emit all other items in `$rest`, and when we do so add all
+        // our `$m` matchers to the list of `$not` matchers as future emissions
+        // will have to negate everything we just matched as well.
+        cfg_if! { @__items ($($not,)* $($m,)*) ; $($rest)* }
+    };
 
-#[cfg_attr(is_nightly, lang = "eh_personality")]
-extern fn eh_personality() {}
-
-#[cfg_attr(is_nightly, no_mangle)]
-extern fn __mulodi4(){}
-#[cfg_attr(is_nightly, no_mangle)]
-extern fn __muloti4(){}
-#[cfg_attr(is_nightly, no_mangle)]
-extern fn __multi3(){}
-#[cfg_attr(is_nightly, no_mangle)]
-extern fn __udivti3(){}
-#[cfg_attr(is_nightly, no_mangle)]
-extern fn __umodti3(){}
-
-// copy from rust-master\src\libcore\marker.rs
-#[cfg_attr(is_nightly, lang = "sized")]
-trait Sized {
-    // Empty.
+    // Internal macro to Apply a cfg attribute to a list of items
+    (@__apply $m:meta, $($it:item)*) => {
+        $(#[$m] $it)*
+    };
 }
 
-#[cfg_attr(is_nightly, lang = "copy")]
-trait Copy {
-    // Empty.
+#[macro_use]
+cfg_if! {
+    if #[cfg(windows)] {
+        extern "C" {fn dllmain();}
+        // from https://github.com/mmastrac/rust-ctor/blob/master/ctor/src/lib.rs
+        #[cfg_attr(target_os = "windows", link_section = ".CRT$XCU")]
+        pub static init: extern "C" fn() = {
+            extern "C" fn initer() {
+                unsafe{dllmain()};
+            } initer
+        };
+    } else{
+        pub fn init(){}
+    }
 }
-
-#[cfg_attr(is_nightly, lang = "freeze")]
-trait Freeze {
-    // Empty.
-}
-
-macro_rules! if_gnu {
-    ($($i:item)*) => ($(
-        #[cfg(target_env = "gnu")]
-        $i
-    )*)
-}
-macro_rules! if_msvc {
-    ($($i:item)*) => ($(
-        #[cfg(target_env = "msvc")]
-        $i
-    )*)
-}
-
-if_gnu!{
-    #[cfg_attr(is_nightly, lang = "eh_unwind_resume")]
-    fn eh_unwind_resume(){}
-    
-    #[cfg_attr(is_nightly, no_mangle)]
-    pub extern fn rust_eh_register_frames(){}
-
-    #[cfg_attr(is_nightly, no_mangle)]
-    pub extern fn rust_eh_unregister_frames(){}
-}
-
-
