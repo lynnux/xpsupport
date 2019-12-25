@@ -36,7 +36,7 @@ extern VOID WINAPI RtlReleaseSRWLockExclusive(PSRWLOCK Lock);
 extern VOID WINAPI RtlReleaseSRWLockShared(PSRWLOCK Lock);
 extern BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock );
 extern BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock );
-extern BOOL WINAPI SleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock, DWORD timeout, ULONG flags );
+extern BOOL WINAPI MySleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock, DWORD timeout, ULONG flags );
 extern VOID WINAPI RtlWakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 extern VOID WINAPI RtlWakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
 
