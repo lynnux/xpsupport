@@ -1,6 +1,6 @@
 [package]
 name = "xpsupport"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["lynnux <lynnux@qq.com>"]
 build = "build.rs"
 link = "minhook"
@@ -16,4 +16,3 @@ name = "xpsupport"
 
 [build-dependencies]
 cc = "1.0.46"
-rustc_version = "0.2.3"
