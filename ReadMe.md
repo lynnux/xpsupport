@@ -1,3 +1,16 @@
+## Final solution
+No need this crate any more! Download [YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases), extract it somewhere, for xp we use the x86 binary, take `E:\YY-Thunks-1.0.2.4-Beta-Binary\objs\x86\YY_Thunks_for_WinXP.obj` for example, create a bat file with content\:
+```
+@echo off
+cd %cd%
+set RUSTFLAGS=-Ctarget-feature=+crt-static -Clink-args=/subsystem:console,5.01 -Clink-args=E:\YY-Thunks-1.0.2.4-Beta-Binary\objs\x86\YY_Thunks_for_WinXP.obj
+doskey cargo1=cargo $* --target i686-pc-windows-msvc
+cargo build --target i686-pc-windows-msvc --release
+cmd /k
+```
+just run the bat file. Cause it use the obj file to link, it's may incompatible with mingw.
+
+
 ## Usage
 
 add this to your Cargo.toml:
