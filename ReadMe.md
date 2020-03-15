@@ -1,16 +1,3 @@
-## Final solution
-No need this crate any more! Download [YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases), extract it somewhere, for xp we use the x86 binary, take `E:\YY-Thunks-1.0.2.4-Beta-Binary\objs\x86\YY_Thunks_for_WinXP.obj` for example, create a bat file with content\:
-```
-@echo off
-cd %cd%
-set RUSTFLAGS=-Ctarget-feature=+crt-static -Clink-args=/subsystem:console,5.01 -Clink-args=E:\YY-Thunks-1.0.2.4-Beta-Binary\objs\x86\YY_Thunks_for_WinXP.obj
-doskey cargo1=cargo $* --target i686-pc-windows-msvc
-cargo build --target i686-pc-windows-msvc --release
-cmd /k
-```
-just run the bat file. Cause it use the obj file to link, it's may incompatible with mingw.
-
-
 ## Usage
 
 add this to your Cargo.toml:
@@ -30,7 +17,14 @@ fn main()
 	//...
 }	
 ```
-for MSVC toolchain, build with command: `cargo rustc -- -C link-args="/subsystem:console,5.01"` or `cargo rustc --release -- -C link-args="/subsystem:console,5.01"`.
+for MSVC toolchain, you can run the bat file\:
+```
+@echo off
+cd %cd%
+set RUSTFLAGS=-Ctarget-feature=+crt-static -Clink-args=/subsystem:console,5.01
+cargo build --target i686-pc-windows-msvc --release
+cmd /k
+```
 
 ## How does it work?
 
@@ -44,6 +38,18 @@ Idea of version `0.2` inspired by [ctor](https://github.com/mmastrac/rust-ctor).
 * SleepConditionVariableSRW
 * WakeAllConditionVariable
 * WakeConditionVariable
+
+## External API solution
+Some third party crate use winapi that not support xp, you can try [YY-Thunks](https://github.com/Chuyu-Team/YY-Thunks) to resolve this.
+Download [YY-Thunks-Binary](https://github.com/Chuyu-Team/YY-Thunks/releases), extract it somewhere, for xp we use the x86 binary, take `E:\YY-Thunks-1.0.2.4-Beta-Binary\objs\x86\YY_Thunks_for_WinXP.obj` for example, run the bat file\:
+```
+@echo off
+cd %cd%
+set RUSTFLAGS=-Ctarget-feature=+crt-static -Clink-args=/subsystem:console,5.01 -Clink-args=E:\YY-Thunks-1.0.2.4-Beta-Binary\objs\x86\YY_Thunks_for_WinXP.obj
+cargo build --target i686-pc-windows-msvc --release
+cmd /k
+```
+just run the bat file. Cause it use the obj file to link, it's may incompatible with mingw.
 
 ## Testing Result
 [Testing code](https://github.com/lynnux/xpsupport-sys/tree/master/test) are from libstd/sync, only `mpsc::stress_recv_timeout_shared` seems deadlock, all other are passed through!
