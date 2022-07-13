@@ -1,3 +1,6 @@
+# Abandon! Not work any more!
+due to this commit https://github.com/rust-lang/rust/commit/59855e0bbf0df22f39dbe39bc58ab5c978fb3765, this crate not work any more!
+
 ## Usage
 
 add this to your Cargo.toml:
